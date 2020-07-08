@@ -1,1 +1,2 @@
 # CrowdMotion
+Run main.py
