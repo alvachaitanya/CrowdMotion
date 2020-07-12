@@ -6,7 +6,7 @@ from models.MotionInfoImages import *
 
 def main():
     value = MotionInfo('/Users/chaitanyareddy/Downloads/UCF_CrowdsDataset')
-    print(value.loadvideos2())
+    print(value.loadvideos())
 
 
 if __name__ == "__main__":
