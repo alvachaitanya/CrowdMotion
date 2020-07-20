@@ -5,8 +5,11 @@ from models.MotionInfoImages import *
 
 
 def main():
-    value = MotionInfo('/Users/chaitanyareddy/Downloads/UCF_CrowdsDataset')
-    print(value.loadvideos())
+    # , '/Users/chaitanyareddy/Downloads/ViratDataset'
+    dataset_paths = ['/Users/chaitanyareddy/Downloads/UCF_CrowdsDataset']
+    for i in range(len(dataset_paths)):
+        value = MotionInfo(dataset_paths[i])
+        value.loadvideos()
 
 
 if __name__ == "__main__":
