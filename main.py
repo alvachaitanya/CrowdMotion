@@ -5,7 +5,7 @@ from models.MotionInfoImages import *
 
 
 def main():
-    # , '/Users/chaitanyareddy/Downloads/ViratDataset'
+    # '/Users/chaitanyareddy/Downloads/UCF_CrowdsDataset' , '/Users/chaitanyareddy/Downloads/ViratDataset'
     dataset_paths = ['/Users/chaitanyareddy/Downloads/UCF_CrowdsDataset']
     for i in range(len(dataset_paths)):
         value = MotionInfo(dataset_paths[i])
