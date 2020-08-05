@@ -7,7 +7,7 @@ from utils.pieradarplot import *
 
 
 class MotionInfo:
-    def __init__(self, directory, refPt=[], output_counter=0, category=['Bottleneck', 'Lane', 'Arc', 'Block']):
+    def __init__(self, directory, refPt=[], output_counter=0, category=['Bottleneck']):#'Bottleneck', 'Lane', 'Arc', 'Block'
         self.directory = directory
         self.refPt = refPt
         self.output_counter = output_counter
@@ -15,6 +15,8 @@ class MotionInfo:
         self.mask = []
         self.masks = []
         self.anglecount = []
+        self.blocksize = 16
+        self.directionarr = np.zeros((int(224/self.blocksize), int(224/self.blocksize), 12))
 
     def loadvideos(self):
         names = []
@@ -41,51 +43,66 @@ class MotionInfo:
                 self.printimg(image, param[1], param[2], folder='cropimg')
                 self.refPt = []
 
-    def printimg(self, image, f, cat, folder='miidata'):
-        outpath = os.path.join(self.directory, folder, cat, f + '-Img-' + str(self.output_counter) + '.png')
-        image = cv2.resize(image, (224, 224))
+    def printimg(self, image, f, cat="", folder='miidata'):
+        outpath = os.path.join(self.directory, folder, f + '-Img-' + str(self.output_counter) + '.png')
         cv2.imwrite(outpath, image)
         self.output_counter += 1
 
     def getmaskimg(self, a, b, c, d, angle):
         colors = [(0, 0, 225), (0, 225, 0), (225, 0, 0), (0, 225, 225), (225, 0, 225), (225, 225, 0), (0, 100, 225),
                   (100, 0, 225), (0, 225, 100), (100, 225, 0), (225, 0, 100), (225, 100, 0)]
+
+        xblock = int(a / self.blocksize)-1
+        yblock = int(b / self.blocksize)-1
+
         if 0 < angle <= 30:
             self.masks[0] = cv2.arrowedLine(self.masks[0], (c, d), (a, b), colors[0], 1, 4, 0, 0.1)
             self.anglecount[0] += 1
+            self.directionarr[xblock][yblock][0] += 1
         elif 30 < angle <= 60:
             self.masks[1] = cv2.arrowedLine(self.masks[1], (c, d), (a, b), colors[1], 1, 4, 0, 0.1)
             self.anglecount[1] += 1
+            self.directionarr[xblock][yblock][1] += 1
         elif 60 < angle <= 90:
             self.masks[2] = cv2.arrowedLine(self.masks[2], (c, d), (a, b), colors[2], 1, 4, 0, 0.1)
             self.anglecount[2] += 1
+            self.directionarr[xblock][yblock][2] += 1
         elif 90 < angle <= 120:
             self.masks[3] = cv2.arrowedLine(self.masks[3], (c, d), (a, b), colors[3], 1, 4, 0, 0.1)
             self.anglecount[3] += 1
+            self.directionarr[xblock][yblock][3] += 1
         elif 120 < angle <= 150:
             self.masks[4] = cv2.arrowedLine(self.masks[4], (c, d), (a, b), colors[4], 1, 4, 0, 0.1)
             self.anglecount[4] += 1
+            self.directionarr[xblock][yblock][4] += 1
         elif 150 < angle <= 180:
             self.masks[5] = cv2.arrowedLine(self.masks[5], (c, d), (a, b), colors[5], 1, 4, 0, 0.1)
             self.anglecount[5] += 1
+            self.directionarr[xblock][yblock][5] += 1
         elif 0 >= angle > -30:
             self.masks[6] = cv2.arrowedLine(self.masks[6], (c, d), (a, b), colors[6], 1, 4, 0, 0.1)
             self.anglecount[11] += 1
+            self.directionarr[xblock][yblock][6] += 1
         elif -30 >= angle > -60:
             self.masks[7] = cv2.arrowedLine(self.masks[7], (c, d), (a, b), colors[7], 1, 4, 0, 0.1)
             self.anglecount[10] += 1
+            self.directionarr[xblock][yblock][7] += 1
         elif -60 >= angle > -90:
             self.masks[8] = cv2.arrowedLine(self.masks[8], (c, d), (a, b), colors[8], 1, 4, 0, 0.1)
             self.anglecount[9] += 1
+            self.directionarr[xblock][yblock][8] += 1
         elif -90 >= angle > -120:
             self.masks[9] = cv2.arrowedLine(self.masks[9], (c, d), (a, b), colors[9], 1, 4, 0, 0.1)
             self.anglecount[8] += 1
+            self.directionarr[xblock][yblock][9] += 1
         elif -120 >= angle > -150:
             self.masks[10] = cv2.arrowedLine(self.masks[10], (c, d), (a, b), colors[10], 1, 4, 0, 0.1)
             self.anglecount[7] += 1
+            self.directionarr[xblock][yblock][10] += 1
         elif -150 >= angle > -180:
             self.masks[11] = cv2.arrowedLine(self.masks[11], (c, d), (a, b), colors[11], 1, 4, 0, 0.1)
             self.anglecount[6] += 1
+            self.directionarr[xblock][yblock][11] += 1
 
     def generatemii(self, path, f, cat, counter=0, counter2=0):
         newcornerpoints = np.zeros(5)
@@ -98,7 +115,7 @@ class MotionInfo:
 
         # Take first frame and find corners in it
         ret, old_frame = cap.read()
-
+        old_frame = cv2.resize(old_frame, (224, 224))
         goodcorner = CornerDetection(old_frame)
         p0, old_gray = goodcorner.tomasiandfastCD()
         tmp_points = p0
@@ -106,6 +123,7 @@ class MotionInfo:
         self.mask = np.zeros_like(old_frame)
         self.masks = []
         self.anglecount = []
+        self.directionarr = np.zeros((int(224/self.blocksize), int(224/self.blocksize), 12))
         for i in range(12):
             self.masks.append(np.zeros_like(old_frame))
             self.anglecount.append(0)
@@ -113,6 +131,7 @@ class MotionInfo:
             ret, frame = cap.read()
             if not ret:
                 break
+            frame = cv2.resize(frame, (224, 224))
             frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             # calculate optical flow
             p1, st, err = cv2.calcOpticalFlowPyrLK(old_gray, frame_gray, p0, None, **lk_params)
@@ -130,8 +149,8 @@ class MotionInfo:
                     if dist > 3:
                         frame = cv2.circle(frame, (a, b), 1, (225, 225, 225), -1)
                 plot = pieradarplot()
-                print(self.anglecount)
-                plt = plot.getpieradarplot(self.anglecount)
+                plot.plotblockdirection(self.directionarr)
+                # plt = plot.getpieradarplot(self.anglecount)
                 for mask in self.masks:
                     self.mask = cv2.add(self.mask, mask)
                 goodcorner = CornerDetection(frame)
@@ -141,21 +160,22 @@ class MotionInfo:
                 cv2.setMouseCallback("Mask", self.click_and_crop, param=[self.mask, f, cat])
                 cv2.imshow('frame', img)
                 cv2.imshow("Mask", self.mask)
-                cv2.imshow("plt", plt)
+                # cv2.imshow("plt", plt)
                 # for i in range(len(self.masks)):
                 #     mask = cv2.resize(self.masks[i], (224, 224))
                 #     cv2.imshow(f"mask{i}", mask)
                 tmp_points = good_new
-                if counter2 == 5:
-                    counter2 = 0
-                    # tmp_points = good_new
+                mskgray = cv2.cvtColor(self.mask, cv2.COLOR_BGR2GRAY)
+                val, count = np.unique(mskgray, return_counts=True)
+                num1 = np.sum(count[val == 0])
+                num2 = np.sum(count[val != 0])
+                if num1 * 0.2 < num2:
                     self.mask = np.zeros_like(old_frame)
+                    self.directionarr = np.zeros((int(224 / self.blocksize), int(224 / self.blocksize), 12))
                     for i in range(12):
                         self.masks[i] = np.zeros_like(old_frame)
                         self.anglecount[i] = 0
-                    # self.printimg(self.mask, f)
-                    print(len(self.masks))
-                counter2 += 1
+                # self.printimg(self.mask, f)
                 cv2.waitKey(1)
             counter += 1
             old_gray = frame_gray.copy()
@@ -167,7 +187,6 @@ class MotionInfo:
                 # p0 =  newcornerpoints
                 # tmp_points = newcornerpoints
                 newcornerpoints = np.zeros(5)
-                print(p0.shape)
             if not p0.any():
                 cv2.destroyAllWindows()
                 cap.release()

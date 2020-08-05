@@ -1,7 +1,10 @@
+from itertools import islice, cycle
+
 import cv2
 import math
 import numpy as np
 from sklearn.cluster import DBSCAN, OPTICS
+import matplotlib.pyplot as plt
 
 
 class CornerDetection:
@@ -30,9 +33,17 @@ class CornerDetection:
 
         # dbscanclustering = DBSCAN(eps=10, min_samples=20).fit(tp)
         # finalpoints = np.expand_dims(dbscanclustering.components_, axis=1)
-        #
-        #
-        opticsclustering = OPTICS(min_samples=10).fit(tp)
-        opticspoints = tp[opticsclustering.labels_ != -1]
+
+        # if tp.shape[0] < 5:
+        #     opticsclustering = OPTICS(min_samples=tp.shape[0]).fit(tp)
+        # else:
+        opticsclustering = OPTICS().fit(tp)
+        opticspoints = tp[opticsclustering.labels_ > -1]
+        # colors = np.array(list(islice(cycle(['#377eb8', '#ff7f00', '#4daf4a',
+        #                                      '#f781bf', '#a65628', '#984ea3',
+        #                                      '#999999', '#e41a1c', '#dede00']),
+        #                               int(max(opticsclustering.labels_) + 1))))
+        # plt.scatter(tp[:, 0], tp[:, 1], s=10, color=colors[opticsclustering.labels_])
+        # plt.show()
         finalpoints = np.expand_dims(opticspoints, axis=1)
         return finalpoints, self.gray
