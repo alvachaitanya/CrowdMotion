@@ -5,13 +5,14 @@ import numpy as np
 import cv2
 import io
 from PIL import Image
+import pandas as pd
 
 class pieradarplot:
     # Set data
     def __init__(self):
         self.group = ['0-30', '30-60', '60-90', '90-120', '120-150', '150-180', '180-210', '210-240', '240-270',
                       '270-300', '300-330', '330-360']
-        self.colors = ['rosybrown','chocolate','orange','blue','pink','red','lime','indigo','teal','tomato','lawngreen','aqua']
+        self.colors = ['rosybrown', 'chocolate', 'orange', 'blue', 'pink', 'red', 'lime', 'indigo', 'teal', 'tomato', 'lawngreen', 'aqua']
 
     def fig2img(self, fig):
         buf = io.BytesIO()
@@ -53,33 +54,119 @@ class pieradarplot:
         elif index == 11:
             return 165, self.colors[index]
 
-    def plotblockdirection(self, directionarr):
+    # def plotblockdirection(self, directionarr, magnitudearr):
+    #     x = range(10)
+    #     y = range(10)
+    #     dirmagarr = np.multiply(directionarr,magnitudearr)
+    #     max = np.amax(dirmagarr)
+    #     rng = max * 0.25
+    #     blocksize = dirmagarr.shape[0]
+    #     # maxVal = np.amax(directionarr)
+    #     # directionarr = directionarr/maxVal
+    #     fig, ax = plt.subplots(nrows=blocksize, ncols=blocksize)
+    #
+    #     for i in range(blocksize):
+    #         for j in range(blocksize):
+    #             ax[i, j].axis('off')
+    #             directions = dirmagarr[i][j]
+    #             flat = directions.flatten()
+    #             flat.sort()
+    #             length = flat[-1]
+    #             length2 = flat[-2]
+    #             if length > rng and length2 > rng:
+    #                 index = np.where(directions == length)
+    #                 index2 = np.where(directions == length2)
+    #                 angle, clr = self.getanglefromindex(index[0][0])
+    #                 angle2, clr2 = self.getanglefromindex(index2[0][0])
+    #                 endy = math.sin(math.radians(angle)) * 0.75
+    #                 endx = math.cos(math.radians(angle)) * 0.75
+    #                 endy2 = math.sin(math.radians(angle2)) * 0.75
+    #                 endx2 = math.cos(math.radians(angle2)) * 0.75
+    #                 ax[i, j].set_ylim(ymin=-1, ymax=1)
+    #                 ax[i, j].set_xlim(xmin=-1, xmax=1)
+    #                 ax[i, j].arrow(0, 0, endx, endy, fc=clr, ec=clr, head_width=0.3, head_length=0.2)
+    #                 ax[i, j].arrow(0, 0, endx2, endy2, fc=clr2, ec=clr2, head_width=0.3, head_length=0.2)
+    #             else:
+    #                 index = np.where(directions == length)
+    #                 angle, clr = self.getanglefromindex(index[0][0])
+    #                 endy = math.sin(math.radians(angle)) * 0.75
+    #                 endx = math.cos(math.radians(angle)) * 0.75
+    #                 ax[i, j].set_ylim(ymin=-1, ymax=1)
+    #                 ax[i, j].set_xlim(xmin=-1, xmax=1)
+    #                 ax[i, j].arrow(0, 0, endx, endy, fc=clr, ec=clr, head_width=0.3, head_length=0.2)
+    #
+    #     img = self.fig2img(fig)
+    #     plt.close()
+    #     img = np.asarray(img)
+    #     img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+    #     cv2.imshow("plot", img)
+    #     cv2.waitKey(1)
+
+    def plotblockdirection(self, directionarr, magnitudearr):
         x = range(10)
         y = range(10)
-        # maxVal = np.amax(directionarr)
-        # directionarr = directionarr/maxVal
-        fig, ax = plt.subplots(nrows=14, ncols=14)
-
-        for i in range(14):
-            for j in range(14):
-                ax[i, j].axis('off')
-                directions = directionarr[i][j]
-                length = np.amax(directions)
-                if length > 0:
+        dirmagarr = np.multiply(directionarr,magnitudearr)
+        blocksize = dirmagarr.shape[0]
+        pdrow = np.zeros_like(dirmagarr)
+        max = np.amax(dirmagarr)
+        rng = max * 0.05
+        fig, ax = plt.subplots(nrows=blocksize, ncols=blocksize)
+        counter = 0
+        for i in range(blocksize):
+            for j in range(blocksize):
+                ax[j, i].axis('off')
+                directions = dirmagarr[i][j]
+                flat = directions.flatten()
+                flat.sort()
+                length = flat[-1]
+                length2 = flat[-2]
+                if length > rng and length2 > rng:
                     index = np.where(directions == length)
+                    index2 = np.where(directions == length2)
+                    pdrow[j][i][index] += 1
+                    pdrow[j][i][index2] += 1
                     angle, clr = self.getanglefromindex(index[0][0])
-                    endy = math.sin(math.radians(angle))
-                    endx = math.cos(math.radians(angle))
-                    ax[i, j].set_ylim(ymin=-1, ymax=1)
-                    ax[i, j].set_xlim(xmin=-1, xmax=1)
-                    ax[i, j].arrow(0, 0, endx, endy, fc=clr, ec=clr, head_width=0.3, head_length=0.2)
-
+                    angle2, clr2 = self.getanglefromindex(index2[0][0])
+                    endy = math.sin(math.radians(angle)) * 0.75
+                    endx = math.cos(math.radians(angle)) * 0.75
+                    endy2 = math.sin(math.radians(angle2)) * 0.75
+                    endx2 = math.cos(math.radians(angle2)) * 0.75
+                    ax[j, i].set_ylim(ymin=-1, ymax=1)
+                    ax[j, i].set_xlim(xmin=-1, xmax=1)
+                    ax[j, i].arrow(0, 0, endx, endy, fc=clr, ec=clr, head_width=0.3, head_length=0.2)
+                    ax[j, i].arrow(0, 0, endx2, endy2, fc=clr2, ec=clr2, head_width=0.3, head_length=0.2)
+                elif length > rng:
+                    index = np.where(directions == length)
+                    pdrow[j][i][index] += 1
+                    angle, clr = self.getanglefromindex(index[0][0])
+                    endy = math.sin(math.radians(angle)) * 0.75
+                    endx = math.cos(math.radians(angle)) * 0.75
+                    ax[j, i].set_ylim(ymin=-1, ymax=1)
+                    ax[j, i].set_xlim(xmin=-1, xmax=1)
+                    ax[j, i].arrow(0, 0, endx, endy, fc=clr, ec=clr, head_width=0.3, head_length=0.2)
         img = self.fig2img(fig)
         plt.close()
         img = np.asarray(img)
         img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
-        cv2.imshow("plot",img)
+        cv2.imshow("plot", img)
         cv2.waitKey(1)
+        dirs = np.split(pdrow.flatten(), (blocksize ** 2))
+        endarr =[]
+        for dir in dirs:
+            index = np.where(dir == 1)
+            if len(index[0]) == 0:
+                endarr.append(0)
+                endarr.append(0)
+            elif len(index[0]) == 1:
+                endarr.append(index[0][0])
+                endarr.append(0)
+            elif len(index[0]) == 2:
+                endarr.append(index[0][0])
+                endarr.append(index[0][1])
+        # print("Enter the input : ")
+        # value = input()
+        endarr.append(3)
+        return endarr
 
     def getpieradarplot(self, values):
         values = self.avgValues(values)
